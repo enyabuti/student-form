@@ -14,6 +14,7 @@ export const config = {
 type ResponseData = {
   success: boolean
   message: string
+  redirectUrl?: string
 }
 
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
@@ -80,9 +81,19 @@ export default async function handler(
       return res.status(200).json({
         success: true,
         message: 'Form submitted successfully',
+        redirectUrl: '/thank-you'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error)
+      
+      // Check for duplicate email error
+      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        return res.status(400).json({
+          success: false,
+          message: 'A student with this email address has already submitted the form',
+        })
+      }
+
       return res.status(500).json({
         success: false,
         message: 'Error submitting form',
